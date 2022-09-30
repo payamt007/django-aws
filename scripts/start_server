@@ -1,0 +1,5 @@
+#!/bin/bash
+cd /home/ubuntu/env0
+source bin/activate
+cd app
+python manage.py runserver

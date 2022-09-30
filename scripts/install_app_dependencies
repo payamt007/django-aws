@@ -1,0 +1,7 @@
+#!/bin/bash
+sudo apt install python3.10-venv
+python -m venv /home/ubuntu/env0
+cd /home/ubuntu/env0
+source bin/activate
+cd app
+pip install -r requirements.txt

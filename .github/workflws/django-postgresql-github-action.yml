@@ -1,0 +1,77 @@
+name: CI-CD github action
+on:
+  push:
+    branches: [zelen_balam]
+jobs:
+  health-check-job:
+    runs-on: ubuntu-22.04
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.10.4]
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: github-actions
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Cache dependency # caching dependency will make our build faster.
+        uses: actions/cache@v2 # for more info checkout pip section documentation at https://github.com/actions/cache
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: list files 0
+        run: ls -a
+      - name: Make envfile
+        uses: SpicyPizza/create-envfile@v1.3
+        with:
+          envkey_SQLDB: github-actions
+          envkey_SQLDBHOST: 127.0.0.1
+          envkey_SQLDBUSER: postgres
+          envkey_SQKDBPASS: postgres
+          envkey_REDISHOST: redis://127.0.0.1:6379
+          file_name: .env
+          fail_on_empty: false
+          #directory: ${{ github.repository }}
+      - name: list files 1
+        run: ls -a
+      - name: show .env file
+        run: cat .env
+      - name: show .gitignore file
+        run: cat .gitignore
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run migrations
+        run: python manage.py migrate
+      - name: Run Tests
+        run: |
+          python manage.py test
+  deployment:
+    runs-on: ubuntu-22.04
+    needs: [health-check-job]
+    steps:
+      - name: Deploy to production server 229
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPSHOST2 }}
+          username: ubuntu
+          #password: ${{ secrets.VPSPASSWORD }}
+          key: ${{ secrets.UBUNTU_22_SINDAD }}
+          #port: ${{ secrets.PORT }}
+          script: |
+            /home/ubuntu/env_provider/deploy_server.sh
