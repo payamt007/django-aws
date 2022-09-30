@@ -1,5 +1,5 @@
 #!/bin/bash
 cd /home/ubuntu/env0
 source bin/activate
-cd app
+cd django-aws
 python manage.py runserver
