@@ -5,4 +5,4 @@ cd /home/ubuntu/django-aws
 #git checkout main
 #zelen script balam
 #new schript
-
+sudo systemctl restart codedeploy-agent
